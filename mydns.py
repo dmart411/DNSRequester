@@ -1,16 +1,17 @@
 import binascii
 import socket
+import sys
 
+#Usage: mydns.py arg_name arg_name
+#Example: mydns.py google.com 199.7.91.13
 
-
-urlGiven = input("Please enter a url (e.g \"google.com\" ): ")
-
-
+urlGiven = sys.argv[1]
+rootDNS = sys.argv[2]
 #Takes url and formats it for message
 def countB4Dot(url):
     values = [] #holds counter in hex and letters in hex
     letters = [] #letters in hex
-    counter = 0 #counts length of strings
+    counter = 0 #counts length of strings before "."
     for element in url:
         
         if element == ".":
@@ -27,6 +28,7 @@ def countB4Dot(url):
 
     return values
 
+#Reformats lists of hex values produced by countB4Dot(url) into a string
 def reformatHex():
     urlWord = ""
     for element in countB4Dot(urlGiven):
@@ -52,13 +54,9 @@ def send_udp_message(message, address, port):
     return binascii.hexlify(data).decode("utf-8")
 
 
-def format_hex(hex):
-    """format_hex returns a pretty version of a hex string"""
-    octets = [hex[i:i+2] for i in range(0, len(hex), 2)]
-    pairs = [" ".join(octets[i:i+2]) for i in range(0, len(octets), 2)]
-    return "\n".join(pairs)
+
 url = reformatHex()
-#url = "07 65 78 61 6d 70 6c 65 03 63 6f 6d 00"
+
 
 message = "AA AA 01 00 00 01 00 00 00 00 00 00 " \
 + url+ "00 01 00 01"
@@ -71,9 +69,9 @@ message = "AA AA 01 00 00 01 00 00 00 00 00 00 " \
 
 
 #MaryLand root DNS server 
-response = send_udp_message(message, "8.8.8.8", 53)
-print(format_hex(response))
-
+response = send_udp_message(message, rootDNS, 53)
+print("\n***Server Reply Content***\n",response)
+print("\n***IP for queried domain name***\n")
 #Writes the incoming message to a text file
 #f.write(format_hex(response))
 #f.close()
