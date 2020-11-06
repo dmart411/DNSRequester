@@ -2,6 +2,29 @@ import binascii
 import socket
 
 
+
+#Takes url and formats it for message
+def countB4Dot(url):
+    values = [] #holds counter in hex and letters in hex
+    letters = [] #letters in hex
+    counter = 0 #counts length of strings
+    for element in url:
+        
+        if element == ".":
+            values.append(hex(counter))
+            values.extend(letters)
+            counter = 0
+            letters = []
+        else:
+            letters.append(hex(ord(element)))
+            counter+=1
+    #appends last section after exiting loop
+    values.append(hex(counter))
+    values.extend(letters)
+
+    return values
+
+
 def send_udp_message(message, address, port):
 
     message = message.replace(" ", "").replace("\n", "")
