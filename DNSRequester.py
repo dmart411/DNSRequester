@@ -3,7 +3,7 @@ import socket
 
 
 
-urlGiven = input("Please enter a url: ")
+urlGiven = input("Please enter a url (e.g \"google.com\" ): ")
 
 
 #Takes url and formats it for message
