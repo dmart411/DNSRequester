@@ -3,6 +3,9 @@ import socket
 
 
 
+urlGiven = input("Please enter a url: ")
+
+
 #Takes url and formats it for message
 def countB4Dot(url):
     values = [] #holds counter in hex and letters in hex
@@ -24,6 +27,16 @@ def countB4Dot(url):
 
     return values
 
+def reformatHex():
+    urlWord = ""
+    for element in countB4Dot(urlGiven):
+        if len(str(element)) < 4:
+            urlWord += ("0" + str(element)[2] + " ")
+        else:
+            urlWord += (str(element)[2] + str(element)[3] + " ")
+    urlWord += "00 "
+    return urlWord
+
 
 def send_udp_message(message, address, port):
 
@@ -44,12 +57,17 @@ def format_hex(hex):
     octets = [hex[i:i+2] for i in range(0, len(hex), 2)]
     pairs = [" ".join(octets[i:i+2]) for i in range(0, len(octets), 2)]
     return "\n".join(pairs)
-
+url = reformatHex()
+#url = "07 65 78 61 6d 70 6c 65 03 63 6f 6d 00"
 
 message = "AA AA 01 00 00 01 00 00 00 00 00 00 " \
-"07 65 78 61 6d 70 6c 65 03 63 6f 6d 00 00 01 00 01"
-#######################################
-#####domain that we are requesting#####
++ url+ "00 01 00 01"
+
+
+#message = "AA AA 01 00 00 01 00 00 00 00 00 00 " \
+#"07 65 78 61 6d 70 6c 65 03 63 6f 6d 00 00 01 00 01"
+########################################
+######domain that we are requesting#####
 
 
 #MaryLand root DNS server 
@@ -57,6 +75,7 @@ response = send_udp_message(message, "8.8.8.8", 53)
 print(format_hex(response))
 
 #Writes the incoming message to a text file
-f = open("hex.txt", "x")
-f.write(format_hex(response))
-f.close()
+#f.write(format_hex(response))
+#f.close()
+
+#print (reformatHex())
