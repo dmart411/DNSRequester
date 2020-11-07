@@ -53,11 +53,83 @@ def send_udp_message(message, address, port):
         sock.close()
     return binascii.hexlify(data).decode("utf-8")
 
+def parse_response(message):
+	print('ID: ' + message[:4])
+	
+	message = message[4:]
+	h = bin(int(message[:4], 16))
+	rcode = h[-4:]	
+	print('RCODE: ', rcode)
+	
+	message = message[8:]
+	ancount = int(message[:4], 16)
+	print('ANCOUNT: ', ancount)
+	
+	message = message[4:]
+	nscount = int(message[:4], 16)
+	print('NSCOUNT: ', nscount)
+	
+	message = message[4:]
+	arcount = int(message[:4], 16)
+	print('ARCOUNT: ', arcount)
+	totalRR = arcount + ancount + nscount
+	
+	message = message[4:]
+	while message[:2] != '00':
+		#in QNAME
+		message = message[1:]
+	
+	message = message[2:]
+	qtype = int(message[:4], 16)
+	print('QTYPE: ', qtype)
+	
+	message = message[4:]
+	qclass = int(message[:4], 16)
+	print('QCLASS: ', qclass)
+	
+	message = message[8:]
+	rrtype = int(message[:4], 16)
+	if rrtype == 1:
+		print('TYPE: A')
+	elif rrtype == 2:
+		print('TYPE: NS')
+	else:
+		print('TYPE: ', rrtype)
+
+	message = message[4:]
+	rrclass = int(message[:4], 16)
+	if rrclass == 1:
+		print('CLASS: IN')
+	else:
+		print('CLASS: ', rrclass)
+	
+	message = message[4:]
+	ttl = int(message[:8], 16)
+	print('TTL: ', ttl, 'seconds')
+
+	rdlength = int(message[:4], 16)
+	print('RDLENGTH: ', rdlength)
+
+	rdata = message[:rdlength*2]
+	message = message[rdlength:]
+
+	if (rrtype == 1): # get the IP from the RDATA if the TYPE is A			
+		a = int(rdata, 16)		
+		ip4 = a & 0xff
+		a = a >> 8
+		ip3 = a & 0xff
+		a = a >> 8
+		ip2 = a & 0xff
+		a = a >> 8
+		ip1 = a & 0xff
+		print("IP: " + str(ip1) + "." + str(ip2) + ".
 
 url = reformatHex()
 message = "AA AA 01 00 00 01 00 00 00 00 00 00 " \
 + url+ "00 01 00 01"
 
 response = send_udp_message(message, rootDNS, 53)
-print("\n***Server Reply Content***\n",response)
+print("\n***Server Reply Content***\n")
+parse_response(response)   
 print("\n***IP for queried domain name***\n")
+             
