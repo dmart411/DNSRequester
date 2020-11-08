@@ -53,6 +53,12 @@ def send_udp_message(message, address, port):
         sock.close()
     return binascii.hexlify(data).decode("utf-8")
 
+def format_hex(hex):
+    """format_hex returns a pretty version of a hex string"""
+    octets = [hex[i:i+2] for i in range(0, len(hex), 2)]
+    pairs = [" ".join(octets[i:i+2]) for i in range(0, len(octets), 2)]
+    return "\n".join(pairs)
+
 def parse_response(message):
 	print('ID: ' + message[:4])
 	
@@ -86,50 +92,74 @@ def parse_response(message):
 	message = message[4:]
 	qclass = int(message[:4], 16)
 	print('QCLASS: ', qclass)
-	
 	message = message[8:]
-	rrtype = int(message[:4], 16)
-	if rrtype == 1:
-		print('TYPE: A')
-	elif rrtype == 2:
-		print('TYPE: NS')
-	else:
-		print('TYPE: ', rrtype)
 
-	message = message[4:]
-	rrclass = int(message[:4], 16)
-	if rrclass == 1:
-		print('CLASS: IN')
-	else:
-		print('CLASS: ', rrclass)
 	
-	message = message[4:]
-	ttl = int(message[:8], 16)
-	print('TTL: ', ttl, 'seconds')
+	while(len(message) != 0):
+		print('------------------------------------')
+		rrtype = int(message[:4], 16)
+		if rrtype == 1:
+			print('TYPE: A')
+		elif rrtype == 2:
+			print('TYPE: NS')
+		else:
+			print('TYPE: ', rrtype)
 
-	rdlength = int(message[:4], 16)
-	print('RDLENGTH: ', rdlength)
+		message = message[4:]
+		rrclass = int(message[:4], 16)
+		if rrclass == 1:
+			print('CLASS: IN')
+		else:
+			print('CLASS: ', rrclass)
+		
+		message = message[4:]
+		ttl = int(message[:8], 16)
+		print('TTL: ', ttl, 'seconds')
 
-	rdata = message[:rdlength*2]
-	message = message[rdlength:]
+		message = message[8:]
+		rdlength = int(message[:4], 16)
+		print('RDLENGTH: ', rdlength)
 
-	if (rrtype == 1): # get the IP from the RDATA if the TYPE is A			
-		a = int(rdata, 16)		
-		ip4 = a & 0xff
-		a = a >> 8
-		ip3 = a & 0xff
-		a = a >> 8
-		ip2 = a & 0xff
-		a = a >> 8
-		ip1 = a & 0xff
-		print("IP: " + str(ip1) + "." + str(ip2) + ".
+		message = message[4:]
+		rdata = message[:rdlength*2]
+		message = message[2*rdlength:]
+
+		if (rrtype == 1): # get the IP from the RDATA if the TYPE is A			
+			a = int(rdata, 16)		
+			ip4 = a & 0xff
+			a = a >> 8
+			ip3 = a & 0xff
+			a = a >> 8
+			ip2 = a & 0xff
+			a = a >> 8
+			ip1 = a & 0xff
+			ip = str(ip1) + "." + str(ip2) + "." + str(ip3) + "." + str(ip4)
+			print("IP: ", ip )
+			print('------------------------------------')
+
+			if (ancount > 0):	
+				return 0, ip # no need to iterate
+			else:
+				return 1, ip # need to iterate
+
+		if (rrtype == 2): # type = NS
+			print('Authoratative Server: ', rdata)
+
+		message = message[4:]
 
 url = reformatHex()
 message = "AA AA 01 00 00 01 00 00 00 00 00 00 " \
 + url+ "00 01 00 01"
 
+print('\nDNS Server to Query: ', rootDNS, '\n')
+
 response = send_udp_message(message, rootDNS, 53)
-print("\n***Server Reply Content***\n")
-parse_response(response)   
-print("\n***IP for queried domain name***\n")
-             
+result = parse_response(response)
+
+while(result[0] != 0):
+	rootDNS = result[1]
+	print('\nDNS Server to Query: ', result[1], '\n')
+	response = send_udp_message(message, rootDNS, 53)
+	result = result = parse_response(response)
+
+print('IP address of ', urlGiven, ': ', result[1])
